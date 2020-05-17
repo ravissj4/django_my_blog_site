@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -60,3 +60,49 @@ class DraftListView(LoginRequiredMixin, ListView):
     model = Post
     def get_queryset(self):
         return Post.objects.filter(published_date__isnull=True).order_by('-created_date')
+
+
+
+# function views requiring a primary key match 
+
+# add a comment to post
+@login_required
+def add_comment_to_post(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.save()
+            return redirect('post_detail', pk=pk)
+        else:
+            print("some error in the commenting")
+    else:
+        form = CommentForm()
+
+    return render(request, 'blog/comment_form.html', {'form' : form})
+
+# approve a comment
+@login_required 
+def approve_comment(request, pk):
+    comment = get_object_or_404(Comment, pk)
+    comment.approve()
+    return redirect('post_details', pk=comment.post.pk)
+
+# remove a comment
+@login_required
+def remove_comment(request, pk):
+    comment = get_object_or_404(Comment, pk)
+    post_pk = comment.post.pk
+    comment.delete()
+    return redirect('post_details', pk=post_pk)
+
+
+# publish the post
+@login_required
+def publish_post(request, pk):
+    post = get_object_or_404(Post, pk)
+    post.publish()
+    return redirect('post_details', pk=pk)
