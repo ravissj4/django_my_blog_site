@@ -1,0 +1,60 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+
+<h1 class="posttitle loader">{{ post.title }}</h1>
+
+<!-- if post is published, show the published date, else show publish button -->
+{% if post.published_date %}
+    <div class="date postdate">{{ post.published_date }}</div>
+{% else %}
+    <a class="btn btn-default" href="{% url 'post_publish' pk=post.pk %}">Publish</a>
+{% endif %}
+
+<!-- show the post content -->
+<p class="postcontent">{{ post.text|safe|linebreaksbr }}</p>
+
+<!-- if the user is authenticated, show him buttons to edit or remove a post -->
+{% if user.authenticated %}
+<a class="btn btn-primary" href="{% url 'post_edit' pk=post.pk %}">
+    <span class="glyphicon glyphicon-pencil"></span>
+</a>
+<a class="btn btn-primary" href="{% url 'post_remove' pk=post.pk %}">
+    <span class="glyphicon glyphicon-remove"></span>
+</a>
+{% endif %}
+
+<hr>
+<!-- show button to add a comment to the post -->
+<a href="{% url 'add_comment_to_post' pk=post.pk %}" class="btn btn-primary">Add Comment</a>
+
+<!-- show all the comments of the post -->
+<!-- if the user is authenticated or the comment is approved, then show the comment created date
+if the comment is not approved(means the user is authenticated), then show option to approve
+or remove the comment -->
+{% for comment in post.comments.all %}
+    {% if user.authenticated or comment.approved_comment %}
+        {{ comment.created_date }}
+        {% if not comment.approved_comment %}
+            <a class="btn btn-default" href="{% url 'comment_remove' pk=comment.pk %}">
+                <span class="glyphicon glyphicon-remove"></span>
+            </a>
+            <a class="btn btn-primary" href="{% url 'comment_approve' pk=comment.pk %}">
+                <span class="glyphicon glyphicon-ok"></span>
+            </a>
+        {% endif %}
+        <!-- show the comment text -->
+        <!-- show the comment author -->   
+        <p>{{ comment.text|safe|linebreaks }}</p>
+        <p>Posted by: <strong>{{ comment.author }}</strong></p> 
+    {% endif %}
+    {% empty %}
+        <p>No Comments posted yet.</p>
+{% endfor %}
+
+
+
+
+
+<!-- if empty, show "no comments posted" -->
+{% endblock %}
