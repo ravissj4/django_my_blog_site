@@ -1,10 +1,10 @@
 from django.db import models
-
-# Create your models here.
 from django.utils import timezone
 from django.core.urlresolvers import reverse
 
+
 class Post(models.Model):
+	# each author will be connected to a User 
     author = models.ForeignKey('auth.User')
     title = models.CharField(max_length=200)
     text = models.TextField()
@@ -15,17 +15,24 @@ class Post(models.Model):
         self.published_date = timezone.now()
         self.save()
 
+    # means there will be a list of comments somewhere, some of them will 
+    # have approved_comments = True and some = False
+    # so, only grab those comments which are approved_comments = True and 
+    # we can show them along with the post.
     def approve_comments(self):
         return self.comments.filter(approved_comment=True)
-    
+        
+    def get_absolute_url(self):
+        return reverse("post_detail",kwargs={'pk':self.pk})
+
+
     def __str__(self):
         return self.title
-    
-    def get_absolute_url(self):
-        return reverse('post_detail', kwargs={'pk' : self.pk})
-    
+
+
 
 class Comment(models.Model):
+	# each commend will be connected to a blog post object
     post = models.ForeignKey('blog.Post', related_name='comments')
     author = models.CharField(max_length=200)
     text = models.TextField()
@@ -37,8 +44,7 @@ class Comment(models.Model):
         self.save()
 
     def get_absolute_url(self):
-        return reverse('blog_post')
-    
+        return reverse("post_list")
+
     def __str__(self):
         return self.text
-

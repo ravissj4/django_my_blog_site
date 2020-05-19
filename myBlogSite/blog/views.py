@@ -31,7 +31,9 @@ class PostDetailView(DetailView):
     
 # create a post
 class PostCreateView(LoginRequiredMixin, CreateView):
+    # login_url - if the user is not logged in, he is taken to this url
     login_url = '/login/'
+    # redirect_field_name - after the update, take this persnon to this link
     redirect_field_name = 'blog/post_detail.html'
 
     form_class = PostForm
@@ -41,6 +43,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
 # update a post
 class PostUpdateView(LoginRequiredMixin, UpdateView):
+
     login_url = '/login/'
     redirect_field_name = 'blog/post_detail.html'
     form_class = PostForm
@@ -56,53 +59,48 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 # show drafts 
 class DraftListView(LoginRequiredMixin, ListView):
     login_url = '/login/'
-    redirect_field_name = 'blog/post_draft_list.html'
+    redirect_field_name = 'blog/post_drafts_list.html'
     model = Post
     def get_queryset(self):
-        return Post.objects.filter(published_date__isnull=True).order_by('-created_date')
+        return Post.objects.filter(published_date__isnull=True).order_by('created_date')
 
 
 
 # function views requiring a primary key match 
 
 # add a comment to post
-@login_required
+# @login_required
 def add_comment_to_post(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    
-    if request.method == 'POST':
+    if request.method == "POST":
         form = CommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.post = post
             comment.save()
-            return redirect('post_detail', pk=pk)
-        else:
-            print("some error in the commenting")
+            return redirect('post_detail', pk=post.pk)
     else:
         form = CommentForm()
+    return render(request, 'blog/comment_form.html', {'form': form})
 
-    return render(request, 'blog/comment_form.html', {'form' : form})
-
-# approve a comment
-@login_required 
+@login_required
 def approve_comment(request, pk):
-    comment = get_object_or_404(Comment, pk)
+    comment = get_object_or_404(Comment, pk=pk)
     comment.approve()
-    return redirect('post_details', pk=comment.post.pk)
+    return redirect('post_detail', pk=comment.post.pk)
 
-# remove a comment
+
 @login_required
 def remove_comment(request, pk):
-    comment = get_object_or_404(Comment, pk)
+    comment = get_object_or_404(Comment, pk=pk)
     post_pk = comment.post.pk
     comment.delete()
-    return redirect('post_details', pk=post_pk)
+    return redirect('post_detail', pk=post_pk)
 
 
 # publish the post
 @login_required
 def publish_post(request, pk):
-    post = get_object_or_404(Post, pk)
+    post = get_object_or_404(Post, pk=pk)
     post.publish()
-    return redirect('post_details', pk=pk)
+    return redirect('post_detail', pk=pk)

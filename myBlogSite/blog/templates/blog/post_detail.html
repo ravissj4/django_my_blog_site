@@ -8,14 +8,14 @@
 {% if post.published_date %}
     <div class="date postdate">{{ post.published_date }}</div>
 {% else %}
-    <a class="btn btn-default" href="{% url 'post_publish' pk=post.pk %}">Publish</a>
+    <a class="btn btn-default" href="{% url 'publish_post' pk=post.pk %}">Publish</a>
 {% endif %}
 
 <!-- show the post content -->
 <p class="postcontent">{{ post.text|safe|linebreaksbr }}</p>
 
 <!-- if the user is authenticated, show him buttons to edit or remove a post -->
-{% if user.authenticated %}
+{% if user.is_authenticated %}
 <a class="btn btn-primary" href="{% url 'post_edit' pk=post.pk %}">
     <span class="glyphicon glyphicon-pencil"></span>
 </a>
@@ -26,35 +26,47 @@
 
 <hr>
 <!-- show button to add a comment to the post -->
-<a href="{% url 'add_comment_to_post' pk=post.pk %}" class="btn btn-primary">Add Comment</a>
-
+<a href="{% url 'add_comment_to_post' pk=post.pk %}" class="btn btn-primary">Add Comment</a> 
+<br>
+<p>Note: You can add comments while not logged in but they will only be visible once accepted by the admin.</p>
+<br><br>
 <!-- show all the comments of the post -->
 <!-- if the user is authenticated or the comment is approved, then show the comment created date
 if the comment is not approved(means the user is authenticated), then show option to approve
 or remove the comment -->
-{% for comment in post.comments.all %}
-    {% if user.authenticated or comment.approved_comment %}
-        {{ comment.created_date }}
-        {% if not comment.approved_comment %}
-            <a class="btn btn-default" href="{% url 'comment_remove' pk=comment.pk %}">
+<div class="container">
+    {% for comment in post.comments.all %}
+        {% if comment.approved_comment %}
+            {{ comment.created_date }}
+            <p>{{ comment.text|safe|linebreaks }}</p>
+            <p>Posted by: <strong>{{ comment.author }}</strong></p> 
+            <a class="btn btn-default" href="{% url 'remove_comment' pk=comment.pk %}">
                 <span class="glyphicon glyphicon-remove"></span>
             </a>
-            <a class="btn btn-primary" href="{% url 'comment_approve' pk=comment.pk %}">
-                <span class="glyphicon glyphicon-ok"></span>
-            </a>
         {% endif %}
-        <!-- show the comment text -->
-        <!-- show the comment author -->   
-        <p>{{ comment.text|safe|linebreaks }}</p>
-        <p>Posted by: <strong>{{ comment.author }}</strong></p> 
-    {% endif %}
+        {% if user.is_authenticated %}
+            
+            {% if not comment.approved_comment %}
+                {{ comment.created_date }}
+                <p>{{ comment.text|safe|linebreaks }}</p>
+                <p>Posted by: <strong>{{ comment.author }}</strong></p> 
+                <a class="btn btn-default" href="{% url 'remove_comment' pk=comment.pk %}">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </a>
+                <a class="btn btn-primary" href="{% url 'approve_comment' pk=comment.pk %}">
+                    <span class="glyphicon glyphicon-ok"></span>
+                </a>
+            
+            {% endif %}
+        {% endif %}
+            <!-- show the comment text -->
+            <!-- show the comment author -->   
+        
     {% empty %}
         <p>No Comments posted yet.</p>
 {% endfor %}
 
-
-
-
+</div>
 
 <!-- if empty, show "no comments posted" -->
 {% endblock %}
